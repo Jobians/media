@@ -25,14 +25,19 @@ jobs:
         run: chmod +x gradlew
 
       # 4. Compile the modules and build the release AARs
-      - name: Build with Gradle
-        run: ./gradlew assembleRelease --no-daemon
+      - name: Build Targeted Modules
+        run: |
+          ./gradlew \
+            :libraries:exoplayer:assembleRelease \
+            :libraries:exoplayer_rtsp:assembleRelease \
+            :libraries:extractor:assembleRelease \
+            :libraries:ui:assembleRelease \
+            --no-daemon
 
       # 5. Collect and upload the built AAR files as an artifact
       - name: Upload Built AARs
         uses: actions/upload-artifact@v4
         with:
           name: androidx-media-aars
-          path: |
-            libraries/**/build/outputs/aar/*-release.aar
+          path: libraries/**/*.aar
           retention-days: 7
