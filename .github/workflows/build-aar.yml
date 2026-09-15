@@ -1,18 +1,16 @@
 name: Build AndroidX Media AARs
 
 on:
-  workflow_dispatch: # Allows you to trigger the build manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out the repository code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Set up Java Environment (AndroidX Media requires Java 17+)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -20,37 +18,39 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # 3. Grant execute permissions to the Gradle Wrapper
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      # 4. Inspect release dependencies before building
-      - name: Check Release Dependencies
+      # Show only local Media project dependencies
+      - name: Check Media Module Dependencies
         run: |
-          echo "===== lib-exoplayer releaseCompileClasspath ====="
+          echo "===== lib-exoplayer ====="
           ./gradlew :lib-exoplayer:dependencies \
             --configuration releaseCompileClasspath \
-            --no-daemon
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
 
           echo ""
-          echo "===== lib-exoplayer-rtsp releaseCompileClasspath ====="
+          echo "===== lib-exoplayer-rtsp ====="
           ./gradlew :lib-exoplayer-rtsp:dependencies \
             --configuration releaseCompileClasspath \
-            --no-daemon
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
 
           echo ""
-          echo "===== lib-extractor releaseCompileClasspath ====="
+          echo "===== lib-extractor ====="
           ./gradlew :lib-extractor:dependencies \
             --configuration releaseCompileClasspath \
-            --no-daemon
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
 
           echo ""
-          echo "===== lib-ui releaseCompileClasspath ====="
+          echo "===== lib-ui ====="
           ./gradlew :lib-ui:dependencies \
             --configuration releaseCompileClasspath \
-            --no-daemon
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
 
-      # 5. Build the release AARs
       - name: Build Targeted Modules
         run: |
           ./gradlew \
@@ -61,13 +61,11 @@ jobs:
             --no-daemon \
             --parallel
 
-      # 6. List generated AAR files
       - name: List Built AARs
         run: |
-          echo "===== Generated AAR files ====="
+          echo "===== Built AARs ====="
           find . -type f -path '*/build/outputs/aar/*.aar' -print
 
-      # 7. Collect and upload the built AAR files as an artifact
       - name: Upload Built AARs
         uses: actions/upload-artifact@v4
         with:
