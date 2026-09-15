@@ -24,25 +24,53 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      # 4. Compile the modules and build the release AARs
+      # 4. Inspect release dependencies before building
+      - name: Check Release Dependencies
+        run: |
+          echo "===== lib-exoplayer releaseCompileClasspath ====="
+          ./gradlew :lib-exoplayer:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon
+
+          echo ""
+          echo "===== lib-exoplayer-rtsp releaseCompileClasspath ====="
+          ./gradlew :lib-exoplayer-rtsp:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon
+
+          echo ""
+          echo "===== lib-extractor releaseCompileClasspath ====="
+          ./gradlew :lib-extractor:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon
+
+          echo ""
+          echo "===== lib-ui releaseCompileClasspath ====="
+          ./gradlew :lib-ui:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon
+
+      # 5. Build the release AARs
       - name: Build Targeted Modules
         run: |
           ./gradlew \
-            :lib-exoplayer:assembleReleaseDependencies \
             :lib-exoplayer:assembleRelease \
-            :lib-exoplayer-rtsp:assembleReleaseDependencies \
             :lib-exoplayer-rtsp:assembleRelease \
-            :lib-extractor:assembleReleaseDependencies \
             :lib-extractor:assembleRelease \
-            :lib-ui:assembleReleaseDependencies \
             :lib-ui:assembleRelease \
             --no-daemon \
             --parallel
 
-      # 5. Collect and upload the built AAR files as an artifact
+      # 6. List generated AAR files
+      - name: List Built AARs
+        run: |
+          echo "===== Generated AAR files ====="
+          find . -type f -path '*/build/outputs/aar/*.aar' -print
+
+      # 7. Collect and upload the built AAR files as an artifact
       - name: Upload Built AARs
         uses: actions/upload-artifact@v4
         with:
           name: androidx-media-aars
-          path: libraries/**/*.aar
+          path: '**/build/outputs/aar/*.aar'
           retention-days: 7
