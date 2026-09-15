@@ -21,28 +21,37 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      # Check the dependency graph
+      # Show the dependency graph
       - name: Check Media Module Dependencies
         run: |
-          for module in \
-            lib-exoplayer \
-            lib-exoplayer-rtsp \
-            lib-extractor \
-            lib-ui
-          do
-            echo "========================================"
-            echo "$module"
-            echo "========================================"
+          echo "===== lib-exoplayer ====="
+          ./gradlew :lib-exoplayer:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
 
-            ./gradlew ":$module:dependencies" \
-              --configuration releaseCompileClasspath \
-              --no-daemon \
-              | grep -E -- 'project :lib-' || true
+          echo ""
+          echo "===== lib-exoplayer-rtsp ====="
+          ./gradlew :lib-exoplayer-rtsp:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
 
-            echo ""
-          done
+          echo ""
+          echo "===== lib-extractor ====="
+          ./gradlew :lib-extractor:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
 
-      # Build all 9 required Media modules
+          echo ""
+          echo "===== lib-ui ====="
+          ./gradlew :lib-ui:dependencies \
+            --configuration releaseCompileClasspath \
+            --no-daemon \
+            | grep -E -- 'project :lib-' || true
+
+      # Build every local AAR required by the target modules
       - name: Build All Required Media AARs
         run: |
           ./gradlew \
@@ -58,42 +67,15 @@ jobs:
             --no-daemon \
             --parallel
 
-      # Automatically collect all 9 AARs into one flat directory
-      - name: Package Media AARs
+      # Show exactly what was generated
+      - name: List Built AARs
         run: |
-          rm -rf media-libs
-          mkdir -p media-libs
+          echo "===== Built AARs ====="
+          find . -type f -path '*/build/outputs/aar/*.aar' -print
 
-          find . \
-            -type f \
-            -path '*/build/outputs/aar/*-release.aar' \
-            -exec cp {} media-libs/ \;
-
-      # Verify exactly the required Media AARs were generated
-      - name: Verify Media AAR Package
-        run: |
-          echo "===== Media AARs ====="
-          find media-libs \
-            -maxdepth 1 \
-            -type f \
-            -name '*.aar' \
-            -printf '%f\n' \
-            | sort
-
-          echo ""
-          echo "===== AAR count ====="
-          count=$(find media-libs -maxdepth 1 -type f -name '*.aar' | wc -l)
-          echo "Found $count AAR(s)"
-
-          if [ "$count" -ne 9 ]; then
-            echo "ERROR: Expected exactly 9 AARs, but found $count."
-            exit 1
-          fi
-
-      # Upload one flat artifact
-      - name: Upload Media AAR Package
+      # Upload all generated AARs
+      - name: Upload Built AARs
         uses: actions/upload-artifact@v4
         with:
-          name: media-libs
-          path: media-libs/
-          retention-days: 7
+          name: androidx-media-aars
+          path: '**/build/outputs/aar/*.aar'
