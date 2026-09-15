@@ -1,0 +1,35 @@
+name: Android CI
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          cache: gradle
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Demo Main APK
+        run: ./gradlew :demos:main:assembleDebug --stacktrace
+
+      - name: Upload Demo APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-main-debug-apk
+          path: 'demos/main/build/outputs/apk/**/*.apk'
