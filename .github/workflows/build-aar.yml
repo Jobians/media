@@ -28,10 +28,10 @@ jobs:
       - name: Build Targeted Modules
         run: |
           ./gradlew \
-            :libraries:exoplayer:assembleRelease \
-            :libraries:exoplayer_rtsp:assembleRelease \
-            :libraries:extractor:assembleRelease \
-            :libraries:ui:assembleRelease \
+            :lib-exoplayer:assembleRelease \
+            :lib-exoplayer-rtsp:assembleRelease \
+            :lib-extractor:assembleRelease \
+            :lib-ui:assembleRelease \
             --no-daemon
 
       # 5. Collect and upload the built AAR files as an artifact
