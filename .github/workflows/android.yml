@@ -28,8 +28,12 @@ jobs:
       - name: Build Demo Main APK
         run: ./gradlew :demo:assembleNoDecoderExtensionsDebug --stacktrace
 
+      - name: Find Generated APK
+        run: find . -type f -name "*.apk" -print
+
       - name: Upload Demo APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: demo-main-debug-apk
-          path: 'demos/main/build/outputs/apk/**/*.apk'
+          path: 'demo/build/outputs/apk/**/*.apk'
+          if-no-files-found: error
